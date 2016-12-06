@@ -1,0 +1,33 @@
+root = "./"
+thread = 8
+logger = nil
+harbor = 0
+start = "main"
+bootstrap = "snlua bootstrap"	-- The service for bootstrap
+luaservice = root .. "dataserver/?.lua;" .. 
+             root .. "common/?.lua;" .. 
+             root .. "skynet/service/?.lua"
+lualoader = root .. "skynet/lualib/loader.lua"
+preload = root .. "global/preload.lua"
+lua_path = root .. "util/?.lua;" .. 
+           root .. "entity/?.lua;" ..
+           root .. "lualib/?.lua;" .. 
+           root .. "skynet/lualib/?.lua;" .. 
+           root .. "skynet/lualib/?/init.lua"
+lua_cpath = root .. "luaclib/?.so;" .. root .. "skynet/luaclib/?.so"
+snax = root .. "common/?.lua"
+cpath = root .. "skynet/cservice/?.so"
+
+-- mysql配置项
+mysql_maxconn = 20
+mysql_host = "127.0.0.1"
+mysql_port = 3306
+mysql_user = "root"
+mysql_pass = "flyfishdb"
+mysql_db = "myapp_test"
+
+-- redis配置项
+redis_maxconn = 1
+redis_host1 = "127.0.0.1"
+redis_port1 = 6379
+redis_db1 = 5
