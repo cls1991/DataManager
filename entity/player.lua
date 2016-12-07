@@ -2,9 +2,9 @@ local MemObj = require "memobj"
 local Player = class("Player", MemObj)
 
 function Player:ctor(playerid, tbname)
-	if not tbname then
-		tbname = "tb_player"
-	end
+    if not tbname then
+        tbname = "tb_player"
+    end
     local name = string.format("%s:%s", tbname, playerid)
     Player.super.ctor(self, name, "playerid")
 end
@@ -14,7 +14,7 @@ function Player:get_playerid()
 end
 
 function Player:get_username()
-	return self:get("username")
+    return self:get("username")
 end
 
 function Player:set_username(username)

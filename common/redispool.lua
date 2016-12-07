@@ -181,6 +181,40 @@ function CMD.pipeline(t)
     return result
 end
 
+function CMD.sadd(key, t)
+    local data = {}
+    for k, v in pairs(t) do
+        table.insert(data, k)
+        table.insert(data, v)
+    end
+    local db = getconn()
+    local result = db:sadd(key, table.unpack(data))
+    return result
+end
+
+function CMD.srem(key, value)
+    local db = getconn()
+    local result = db:srem(key, value)
+    return result
+end
+
+function CMD.sismember(key, value)
+    local db = getconn()
+    local result = db:sismember(key, value)
+    return result
+end
+
+function CMD.smembers(key)
+    local db = getconn()
+    local result = db:smembers(key)
+    return result
+end
+
+function CMD.exists(key)
+    local db = getconn()
+    local result = db:exists(key)
+    return result
+end
 
 skynet.start(function()
     skynet.dispatch("lua", function(session, source, cmd, ...)
@@ -190,3 +224,4 @@ skynet.start(function()
 
     skynet.register(SERVICE_NAME)
 end)
+

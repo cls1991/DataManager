@@ -24,7 +24,7 @@ function get_fields(tbname)
     return fields
 end
 
-function get_field_type(field)
+function get_field_type(tbname, field)
     local sql = string.format("select data_type from information_schema.columns where table_schema='%s' and table_name='%s' and column_name='%s'",
     dbname, tbname, field)
     local rs = skynet.call("mysqlpool", "lua", "execute", sql)
@@ -32,8 +32,10 @@ function get_field_type(field)
 end
 
 local function load_schema_data(tbname)
-    schema[tbname]["pk"] = get_primary_key(dbname, tbname)
-    local fields = get_fields(dbname, tbname)
+    schema[tbname] = {}
+    schema[tbname]["pk"] = get_primary_key(tbname)
+    schema[tbname]["fields"] = {}
+    local fields = get_fields(tbname)
     for _, field in pairs(fields) do
         local field_type = get_field_type(tbname, field)
         if field_type == "char" 
@@ -52,18 +54,21 @@ end
 function get_schema_data(tbname)
 	local schema_data = schema[tbname]
 	if not schema_data then
-		schema_data = load_schema_data(dbname, tbname)
+		schema_data = load_schema_data(tbname)
 	end
 	return schema_data
 end
 
 function get_maxkey(tbname)
+    load_schema_data(tbname)
     local pk = schema[tbname]["pk"]
     local sql = string.format("select max(%s) as maxkey from %s", pk, tbname)
     local result = skynet.call("mysqlpool", "lua", "execute", sql)
     if #result > 0 and not table.empty(result[1]) then
         skynet.call("redispool", "lua", "set", tbname .. ":" .. pk, result[1]["maxkey"])
+        return result[1]["maxkey"]
     end
+    return 0
 end
 
 
@@ -78,9 +83,6 @@ function format_item(key, value)
 end
 
 function format_condition(props)
-    if props == nil then
-        return ""
-    end
     local con = {}
     for key, value in pairs(props) do
         if value == nil then
@@ -94,9 +96,6 @@ function format_condition(props)
 end
 
 function format_update_str(props)
-    if props == nil then
-        return ""
-    end
     local con = {}
     for key, value in pairs(props) do
         if value == nil then
@@ -130,13 +129,21 @@ function construct_update_str(tbname, props, pres)
     return sql
 end
 
-function construct_query_str(tbname, pres)
+function construct_query_str(tbname, pres, props)
     local pre = format_condition(pres)
     local str = ""
     if pre ~= "" then
-        sql = string.format("select * from `%s` where %s", tbname, pre)
+        if props then
+            sql = string.format("select %s from `%s` where %s", props, tbname, pre)
+        else
+            sql = string.format("select * from `%s` where %s", tbname, pre)
+        end
     else
-        sql = string.format("select * from `%s`", tbname)
+        if props then
+            sql = string.format("select %s from `%s`", props, tbname)
+        else
+            sql = string.format("select * from `%s`", tbname)
+        end
     end
     return sql
 end

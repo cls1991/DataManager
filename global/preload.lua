@@ -2,4 +2,4 @@
 
 require "luaext"
 require "db"
-
+require "memmode"

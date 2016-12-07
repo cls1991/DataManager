@@ -22,6 +22,7 @@ table.indices = function(t)
     for k, v in pairs(t) do
         table.insert(result, k)
     end
+    return result
 end
 
 -- 返回table值列表
@@ -30,6 +31,7 @@ table.values = function(t)
     for k, v in pairs(t) do
         table.insert(result, v)
     end
+    return result
 end
 
 -- 浅拷贝

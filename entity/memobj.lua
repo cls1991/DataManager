@@ -2,9 +2,8 @@ local skynet = require "skynet"
 local print_r = require "print_r"
 local MemObj = class("MemObj")
 
-function MemObj:ctor(name, pk)
+function MemObj:ctor(name, pk, data)
     self._name = name
-    self._data = {}
     self._update = {}
     self._pk = pk
     local tmp_pks = string.split(pk, ",")
@@ -12,6 +11,11 @@ function MemObj:ctor(name, pk)
         self.is_multi_pk = true
     else
         self.is_multi_pk = false
+    end
+    if not data then
+        self._data = {}
+    else
+        self._data = data
     end
 end
 
@@ -82,7 +86,6 @@ function MemObj:save()
     for key, value in pairs(self._update) do
         table.insert(pipeline, {"hset", self._name, key, value})
     end
-    print_r(pipeline)
     skynet.call("redispool", "lua", "pipeline", pipeline)
 end
 
@@ -103,6 +106,21 @@ function MemObj:set_multi_values(multi_values)
         self._data[key] = value
         self._update[key] = value
     end
+end
+
+function MemObj:init_redis_from_local()
+    if table.empty(self._data) then
+        return
+    end
+    skynet.call("redispool", "lua", "hmset", self._name, self._data)
+end
+
+function MemObj:get_primary_keys()
+    return string.split(self._name, ":")[2]
+end
+
+function MemObj:get_name()
+    return self._name
 end
 
 return MemObj

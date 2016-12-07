@@ -7,6 +7,8 @@ local table = table
 local string = string
 local print_r = require "print_r"
 local player = require "player"
+local deskplayer = require "deskplayer"
+local mempkvalues = require "mempkvalues"
 
 local mode = ...
 
@@ -77,6 +79,35 @@ else
         local data2 = p:get_player_data()
         print_r(data2)
 
+        -- test desk_player
+        local mem_dict = {
+            playerid=145,
+            deskid=1,
+            hand="abc"
+        }
+        local mem_obj = mem_deskplayer_admin:create(mem_dict)
+        local mem_key = mem_obj:get_primary_keys()
+        local key = string.format("%s:%s", p:get_name(), "deskplayer")
+        local mem_pk_values = mempkvalues.new(key, "number", false)
+        local dp = deskplayer.new(mem_key)
+        local dp_data = dp:get_desk_player_data()
+        print_r(dp_data)
+        mem_pk_values:add_item({mem_key})
+        local pres = {
+            playerid=145
+        }
+        if not mem_pk_values:exists_item() then
+            local ids = mem_deskplayer_admin:get_pk_by_fk(pres)
+            mem_pk_values:add_item(ids)
+        end
+        local ids = mem_pk_values:get_items()
+        print_r(ids)
+        for _, id in pairs(ids) do
+            dp = deskplayer.new(id)
+            local dp_data = dp:get_desk_player_data()
+            print_r(dp_data)
+        end
+
         local balance = 1
         local id = socket.listen("0.0.0.0", 10000)
         skynet.error("Listen web port 10000")
@@ -90,3 +121,4 @@ else
         end)
     end)
 end
+
