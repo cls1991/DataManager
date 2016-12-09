@@ -183,8 +183,7 @@ end
 
 function CMD.sadd(key, t)
     local data = {}
-    for k, v in pairs(t) do
-        table.insert(data, k)
+    for _, v in pairs(t) do
         table.insert(data, v)
     end
     local db = getconn()

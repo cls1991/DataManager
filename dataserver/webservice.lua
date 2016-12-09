@@ -6,9 +6,9 @@ local urllib = require "http.url"
 local table = table
 local string = string
 local print_r = require "print_r"
-local player = require "player"
-local deskplayer = require "deskplayer"
-local mempkvalues = require "mempkvalues"
+local Player = require "player"
+local PlayerManager = require "playermanager"
+local DeskPlayerManager = require "deskplayermanager"
 
 local mode = ...
 
@@ -71,7 +71,10 @@ else
             agent[i] = skynet.newservice(SERVICE_NAME, "agent")
         end
         -- test player
-        local p = player.new(145)
+        local p = Player.new(145)
+        PlayerManager:get_instance():add_player(p)
+        local all_players = PlayerManager:get_instance():get_all_players()
+        print_r(all_players)
         local data = p:get_player_data()
         print_r(data)
         p:set_username("cls1991")
@@ -80,33 +83,16 @@ else
         print_r(data2)
 
         -- test desk_player
-        local mem_dict = {
-            playerid=145,
-            deskid=1,
-            hand="abc"
-        }
-        local mem_obj = mem_deskplayer_admin:create(mem_dict)
-        local mem_key = mem_obj:get_primary_keys()
-        local key = string.format("%s:%s", p:get_name(), "deskplayer")
-        local mem_pk_values = mempkvalues.new(key, "number", false)
-        local dp = deskplayer.new(mem_key)
-        local dp_data = dp:get_desk_player_data()
-        print_r(dp_data)
-        mem_pk_values:add_item({mem_key})
-        local pres = {
-            playerid=145
-        }
-        if not mem_pk_values:exists_item() then
-            local ids = mem_deskplayer_admin:get_pk_by_fk(pres)
-            mem_pk_values:add_item(ids)
+        local dp_instance = DeskPlayerManager:get_instance()
+        dp_instance:init_desk_player(p:get_playerid())
+        local desk_player = dp_instance:get_desk_player(p:get_playerid())
+        if desk_player ~= nil then
+            print_r(desk_player)
         end
-        local ids = mem_pk_values:get_items()
-        print_r(ids)
-        for _, id in pairs(ids) do
-            dp = deskplayer.new(id)
-            local dp_data = dp:get_desk_player_data()
-            print_r(dp_data)
-        end
+        local new_desk_player = dp_instance:create_desk_player(1, p:get_playerid())
+        print_r(new_desk_player)
+        local desk_player2 = dp_instance:get_desk_player(p:get_playerid())
+        print_r(desk_player2)
 
         local balance = 1
         local id = socket.listen("0.0.0.0", 10000)

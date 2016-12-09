@@ -133,13 +133,13 @@ function construct_query_str(tbname, pres, props)
     local pre = format_condition(pres)
     local str = ""
     if pre ~= "" then
-        if props then
+        if props ~= nil then
             sql = string.format("select %s from `%s` where %s", props, tbname, pre)
         else
             sql = string.format("select * from `%s` where %s", tbname, pre)
         end
     else
-        if props then
+        if props ~= nil then
             sql = string.format("select %s from `%s`", props, tbname)
         else
             sql = string.format("select * from `%s`", tbname)
