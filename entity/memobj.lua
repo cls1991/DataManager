@@ -26,24 +26,27 @@ function MemObj:get_data()
     return self._data
 end
 
+function MemObj:get_pk_data(pk_values)
+    local pres = {}
+    if self.is_multi_pk then
+        local keys = string.split(self._pk, ",")
+        local values = string.split(pk_values, "#")
+        for index, key in pairs(keys) do
+            pres[key] = values[index]
+        end
+    else
+        pres[self._pk] = pk_values
+    end
+    return pres
+end
+
 function MemObj:load()
     -- load an entire data from redis, return data
     -- otherwise load data from mysql
     local data = skynet.call("redispool", "lua", "hgetall", self._name)
     if  table.empty(data) then
-        local pres = {}
-        local tmp_table = string.split(self._name, ":")
-        local table_name = tmp_table[1]
-        local tmp_value_str = tmp_table[2]
-        if self.is_multi_pk then
-            local keys = string.split(self._pk, ",")
-            local values = string.split(tmp_value_str, "#")
-            for index, key in pairs(keys) do
-                pres[key] = values[index]
-            end
-        else
-            pres[self._pk] = tmp_value_str
-        end
+        local pres = self:get_pk_data()
+        local table_name = string.split(self._name, ":")[1]
         local sql = construct_query_str(table_name, pres)
         data = skynet.call("mysqlpool", "lua", "execute", sql)
         -- set local and redis
@@ -52,41 +55,83 @@ function MemObj:load()
             skynet.call("redispool", "lua", "hmset", self._name, self._data)
         end
     else
-        self._data = data
+        -- parse redis data
+        for i=1, #data, 2 do
+            self._data[data[i]] = data[i+1]
+        end
     end
 end
 
 function MemObj:delete()
     -- delete an entire data from redis by primary_key
+    -- add delete op to change_list
     skynet.call("redispool", "lua", "del", self._name)
-    local pres = {}
-    local tmp_table = string.split(self._name, ":")
-    local table_name = tmp_table[1]
-    local tmp_value_str = tmp_table[2]
-    if self.is_multi_pk then
-        local keys = string.split(self._pk, ",")
-        local values = string.split(tmp_value_str, "#")
-        for index, key in pairs(keys) do
-            pres[key] = values[index]
-        end
-    else
-        pres[self._pk] = tmp_value_str
-    end
-    local sql = construct_delete_str(table_name, pres)
-    skynet.call("mysqlpool", "lua", "execute", sql)
+    local op_data = {op="delete", name=self._name, pk=self._pk, time=skynet.time()}
+    local op_queue_key = skynet.getenv("data_queue")
+    skynet.call("redispool", "lua", "lpush", op_queue_key, {table.seralize(op_data)})    
 end
 
 function MemObj:save()
     -- 添加到change_list队列上
-    -- TODO
     if table.empty(self._update) then
         return
     end
+    local table_name = string.split(self._name, ":")[1]
+    local db_fields = get_fields(table_name)
     local pipeline = {}
     for key, value in pairs(self._update) do
-        table.insert(pipeline, {"hset", self._name, key, value})
+        local is_in = false
+        for _, field in pairs(db_fields) do
+            if key == field then
+                is_in = true
+                break
+            end
+        end
+        if is_in then
+            table.insert(pipeline, {"hset", self._name, key, value})
+        end
     end
     skynet.call("redispool", "lua", "pipeline", pipeline)
+    local op_data = {op="update", name=self._name, pk=self._pk, time=skynet.time()}
+    local op_queue_key = skynet.getenv("data_queue")
+    skynet.call("redispool", "lua", "lpush", op_queue_key, {table.seralize(op_data)})
+end
+
+function MemObj:push_to_db()
+    -- save local data to db
+    local update_table = {}
+    local tmp_table = string.split(self._name, ":")
+    local table_name = tmp_table[1]
+    local db_fields = get_fields(table_name)
+    for key, value in pairs(self._data) do
+        local is_in = false
+        for _, field in pairs(db_fields) do
+            if key == field then
+                is_in = true
+                break
+            end
+        end
+        if is_in then
+            update_table[key] = value
+        end
+    end
+    if table.empty(update_table) then
+        return
+    end
+    local tmp_value_str = tmp_table[2]
+    local pres = self:get_pk_data(tmp_value_str)
+    local update_sql = construct_update_str(table_name, update_table, pres)
+    skynet.call("mysqlpool", "lua", "execute", update_sql)
+end
+
+function MemObj:del_from_db()
+    -- delele data from db
+    local tmp_table = string.split(self._name, ":")
+    local table_name = tmp_table[1]
+    local tmp_value_str = tmp_table[2]
+    local pres = self:get_pk_data(tmp_value_str)
+    local delete_sql = construct_delete_str(table_name, pres)
+    skynet.call("mysqlpool", "lua", "execute", delete_sql) 
 end
 
 function MemObj:get(key)

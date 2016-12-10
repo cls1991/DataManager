@@ -18,11 +18,11 @@ function DeskPlayer:get_deskid()
 end
 
 function DeskPlayer:get_hand()
-	return self.get("hand")
+	return self:get("hand")
 end
 
 function DeskPlayer:set_hand(hand)
-	self.set("hand", hand)
+	self:set("hand", hand)
 end
 
 function DeskPlayer:get_desk_player_data()

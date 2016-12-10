@@ -215,6 +215,38 @@ function CMD.exists(key)
     return result
 end
 
+function CMD.lpush(key, t)
+    local data = {}
+    for _, v in pairs(t) do
+        table.insert(data, v)
+    end
+    local db = getconn()
+    local result = db:lpush(key, table.unpack(data))
+    return result
+end
+
+function CMD.lpop(key)
+    local db = getconn()
+    local result = db:lpop(key)
+    return result
+end
+
+function CMD.rpush(key, t)
+    local data = {}
+    for _, v in pairs(t) do
+        table.insert(data, v)
+    end
+    local db = getconn()
+    local result = db:rpush(key, table.unpack(data))
+    return result
+end
+
+function CMD.rpop(key)
+    local db = getconn()
+    local result = db:rpop(key)
+    return result
+end
+
 skynet.start(function()
     skynet.dispatch("lua", function(session, source, cmd, ...)
         local f = assert(CMD[cmd], cmd .. "not found")

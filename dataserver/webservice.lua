@@ -92,7 +92,14 @@ else
         local new_desk_player = dp_instance:create_desk_player(1, p:get_playerid())
         print_r(new_desk_player)
         local desk_player2 = dp_instance:get_desk_player(p:get_playerid())
-        print_r(desk_player2)
+        local dp_data = desk_player2:get_desk_player_data()
+        print_r(dp_data)
+        desk_player2:set_hand("abc")
+        desk_player2:save()
+        dp_instance:del_desk_player_by_id(p:get_playerid())
+        desk_player2:delete()
+        local desk_player3 = dp_instance:get_desk_player(p:get_playerid())
+        print_r(desk_player3)
 
         local balance = 1
         local id = socket.listen("0.0.0.0", 10000)

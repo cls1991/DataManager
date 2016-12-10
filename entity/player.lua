@@ -3,19 +3,16 @@ local Player = class("Player", MemObj)
 local PlayerData = require "playerdata"
 local PlayerDataManager = require "playerdatamanager"
 
-function Player:ctor(playerid, init_local, tbname)
-    if tbname == nil then
-        tbname = "tb_player"
+function Player:ctor(playerid, init_local, table_name)
+    if table_name == nil then
+        table_name = "tb_player"
     end
-    local name = string.format("%s:%s", tbname, playerid)
+    local name = string.format("%s:%s", table_name, playerid)
     Player.super.ctor(self, name, "playerid")
-    if init_local == nil then
-    	init_local = true
-    end
-    self._init_local = init_local
-    if self._init_local then
-    	-- lcoal player_data = PlayerData.new(playerid)
-    	-- PlayerDataManager.get_instance():add_player_data(player_data)
+    local init_local = init_local or true
+    if init_local then
+    	-- local player_data = PlayerData.new(playerid)
+    	-- PlayerDataManager:get_instance():add_player_data(player_data)
     end
 end
 

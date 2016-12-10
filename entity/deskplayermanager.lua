@@ -30,7 +30,7 @@ function DeskPlayerManager:create_desk_player(deskid, playerid)
 		fill_data_by_path(paths, player_data:get_data(), desk_player)
 		local player = player_data:get_player_obj()
 		local key = string.format("%s:%s", player:get_name(), "deskplayer")
-		local mem_pk_values = MemPkValues.new(key, "number", false)
+		local mem_pk_values = MemPkValues.new(key, "number", true)
 		mem_pk_values:add_item({mem_key})
 	end
 	return desk_player
@@ -45,7 +45,7 @@ function DeskPlayerManager:init_desk_player(playerid)
 	end
 	local player = player_data:get_player_obj()
 	local key = string.format("%s:%s", player:get_name(), "deskplayer")
-	local mem_pk_values = MemPkValues.new(key, "number", false)
+	local mem_pk_values = MemPkValues.new(key, "number", true)
 	if not mem_pk_values:exists_item() then
         local ids = mem_deskplayer_admin:get_pk_by_fk({playerid=playerid})
         mem_pk_values:add_item(ids)
@@ -68,9 +68,13 @@ function DeskPlayerManager:get_desk_player(playerid)
 end
 
 function DeskPlayerManager:del_desk_player_by_id(playerid)
+	local player_data = PlayerDataManager:get_instance():get_player_data(playerid)
+	local paths = string.format("%s,%s", PLAYER_DATA["BASE_INFO"], PLAYER_DATA["PLAYER_DESK"])
+	fill_data_by_path(paths, player_data:get_data(), {})
 end
 
 function DeskPlayerManager:del_desk_player(desk_player)
+	self:del_desk_player_by_id(desk_player:get_playerid())
 end
 
 return DeskPlayerManager

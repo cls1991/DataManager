@@ -4,7 +4,7 @@ function PlayerData:ctor(playerid, player_obj)
 	self._playerid = playerid
 	self._data = {}
 	if player_obj ~= nil then
-		self._data[PLAYER_DATA["BASE_INFO"]] = player_obj
+		fill_data_by_path(PLAYER_DATA["BASE_INFO"], self._data, player_obj)
 	end
 end
 
