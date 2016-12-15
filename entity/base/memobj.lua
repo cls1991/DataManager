@@ -8,9 +8,9 @@ function MemObj:ctor(name, pk, data)
     self._pk = pk
     local tmp_pks = string.split(pk, ",")
     if #tmp_pks > 1 then
-        self.is_multi_pk = true
+        self._is_multi_pk = true
     else
-        self.is_multi_pk = false
+        self._is_multi_pk = false
     end
     if not data then
         self._data = {}
@@ -28,7 +28,7 @@ end
 
 function MemObj:get_pk_data(pk_values)
     local pres = {}
-    if self.is_multi_pk then
+    if self._is_multi_pk then
         local keys = string.split(self._pk, ",")
         local values = string.split(pk_values, "#")
         for index, key in pairs(keys) do
@@ -40,13 +40,46 @@ function MemObj:get_pk_data(pk_values)
     return pres
 end
 
+function MemObj:convert_to_lua_data(origin_data)
+    local table_name = string.split(self._name, ":")[1]
+    local column_data = get_schema_data(table_name)
+    local result_data = {}
+    for key, value in pairs(origin_data) do
+        local is_in = false
+        local tmp_value = value
+        for field_name, field_type in pairs(column_data["fields"]) do
+            if key == field_name then
+                is_in = true
+                break
+            end
+        end
+        if is_in and column_data["fields"][key] == "number" then
+            tmp_value = tonumber(value)
+        end
+        result_data[key] = tmp_value
+    end
+    return result_data
+end
+
+function MemObj:convert_to_lua_type(key, value)
+    local table_name = string.split(self._name, ":")[1]
+    local column_data = get_schema_data(table_name)
+    local field_type = column_data["fields"][key]
+    if field_type == "number" then
+        return tonumber(value)
+    end
+    return value
+end
+
 function MemObj:load()
     -- load an entire data from redis, return data
     -- otherwise load data from mysql
     local data = skynet.call("redispool", "lua", "hgetall", self._name)
     if  table.empty(data) then
-        local pres = self:get_pk_data()
-        local table_name = string.split(self._name, ":")[1]
+        local tmp_table = string.split(self._name, ":")
+        local table_name = tmp_table[1]
+        local tmp_value_str = tmp_table[2]
+        local pres = self:get_pk_data(tmp_value_str)
         local sql = construct_query_str(table_name, pres)
         data = skynet.call("mysqlpool", "lua", "execute", sql)
         -- set local and redis
@@ -59,16 +92,18 @@ function MemObj:load()
         for i=1, #data, 2 do
             self._data[data[i]] = data[i+1]
         end
+        self._data = self:convert_to_lua_data(self._data)
     end
 end
 
 function MemObj:delete()
     -- delete an entire data from redis by primary_key
     -- add delete op to change_list
-    skynet.call("redispool", "lua", "del", self._name)
+    local ret = skynet.call("redispool", "lua", "del", self._name)
     local op_data = {op="delete", name=self._name, pk=self._pk, time=skynet.time()}
     local op_queue_key = skynet.getenv("data_queue")
-    skynet.call("redispool", "lua", "lpush", op_queue_key, {table.seralize(op_data)})    
+    skynet.call("redispool", "lua", "lpush", op_queue_key, {table.seralize(op_data)})
+    self._data = {} 
 end
 
 function MemObj:save()
@@ -91,10 +126,14 @@ function MemObj:save()
             table.insert(pipeline, {"hset", self._name, key, value})
         end
     end
+    if table.empty(pipeline) then
+        return
+    end
     skynet.call("redispool", "lua", "pipeline", pipeline)
     local op_data = {op="update", name=self._name, pk=self._pk, time=skynet.time()}
     local op_queue_key = skynet.getenv("data_queue")
     skynet.call("redispool", "lua", "lpush", op_queue_key, {table.seralize(op_data)})
+    self._update = {}
 end
 
 function MemObj:push_to_db()
@@ -161,7 +200,11 @@ function MemObj:init_redis_from_local()
 end
 
 function MemObj:get_primary_keys()
-    return string.split(self._name, ":")[2]
+    local key = string.split(self._name, ":")[2]
+    if not self._is_multi_pk then
+        key = tonumber(key)
+    end
+    return key
 end
 
 function MemObj:get_name()

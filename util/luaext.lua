@@ -119,7 +119,7 @@ string.split = function(s, delim)
     local split = {}
     local pattern = "."
     if delim ~= nil then
-    pattern = string.format("([^%s]+)", delim)
+	   pattern = string.format("([^%s]+)", delim)
     end
     string.gsub(s, pattern, function(v) table.insert(split, v) end)
     return split
@@ -186,7 +186,7 @@ end
 do
     local _tostring = tostring
     tostring = function(v)
-        if type(v) == "table" then
+        if type(v) == 'table' then
             return dump(v)
         else
             return _tostring(v)

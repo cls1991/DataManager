@@ -10,7 +10,12 @@ luaservice = root .. "dataserver/?.lua;" ..
 lualoader = root .. "skynet/lualib/loader.lua"
 preload = root .. "global/preload.lua"
 lua_path = root .. "util/?.lua;" .. 
-           root .. "entity/?.lua;" ..
+           root .. "entity/const/?.lua;" ..
+           root .. "entity/base/?.lua;" ..
+           root .. "entity/user/?.lua;" ..
+           root .. "entity/player/?.lua;" ..
+           root .. "entity/desk/?.lua;" ..
+           root .. "entity/arena/?.lua;" ..
            root .. "lualib/?.lua;" .. 
            root .. "skynet/lualib/?.lua;" .. 
            root .. "skynet/lualib/?/init.lua"

@@ -12,48 +12,23 @@ function PlayerDataManager:get_instance()
 end
 
 function PlayerDataManager:add_player_data(player_data)
-	local is_in = false
-	for playerid, _ in pairs(self._all_player_data) do
-		if player_data:get_playerid() == playerid then
-			is_in = true
-			break
-		end
-	end
-	if not is_in then
-		self._all_player_data[player_data:get_playerid()] = player_data
+	local playerid = player_data:get_playerid()
+	if not self:has_player_data(playerid) then
+		self._all_player_data[playerid] = player_data
 	end
 end
 
 function PlayerDataManager:has_player_data(playerid)
-	for pid, _ in pairs(self._all_player_data) do
-		if playerid == pid then
-			return true
-		end
-	end
-	return false
+	return self._all_player_data[playerid] ~= nil
 end
 
 function PlayerDataManager:get_player_data(playerid)
-	for pid, _ in pairs(self._all_player_data) do
-		if playerid == pid then
-			return self._all_player_data[playerid]
-		end
-	end
-	return nil
+	return self._all_player_data[playerid]
 end
 
 function PlayerDataManager:del_player_data_by_id(playerid)
-	local is_in = false
-	local i = 1
-	for pid, _ in pairs(self._all_player_data) do
-		if pid == playerid then
-			is_in = true
-			break
-		end
-		i = i + 1
-	end
-	if is_in then
-		table.remove(self._all_player_data, i)
+	if self:has_player_data(playerid) then
+		self._all_player_data[playerid] = nil
 	end
 end
 

@@ -13,16 +13,14 @@ end
 function CMD.stop()
 end
 
-local function data_sync(queue_id)
+local function data_sync()
     -- data op queue
     local redis_queue_key = skynet.getenv("data_queue")
     while true do
-        local item = skynet.call("redispool", "lua", "rpop", redis_queue_key)
+        local item = skynet.call("redispool", "lua", "lpop", redis_queue_key)
         if item then
             local op_data = load(item)()
             local mem_obj = MemObj.new(op_data["name"], op_data["pk"])
-            local mem_data = mem_obj:get_data()
-            print_r(mem_data)
             if op_data["op"] == "update" then
                 local need_execute = true
                 for name, time in pairs(t_update) do
@@ -38,6 +36,8 @@ local function data_sync(queue_id)
                     end
                 end
                 if need_execute then
+                    local mem_data = mem_obj:get_data()
+                    print_r(mem_data)
                     mem_obj:push_to_db()
                     t_update[op_data["name"]] = skynet.time()
                 end
@@ -60,8 +60,8 @@ local function data_sync(queue_id)
             t_update = {}
             t_delete = {}
             skynet.error("no data in queue")
+            skynet.sleep(5000)
         end
-        skynet.sleep(500)
     end
 end
 

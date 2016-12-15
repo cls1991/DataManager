@@ -8,7 +8,7 @@ local string = string
 local print_r = require "print_r"
 local Player = require "player"
 local PlayerManager = require "playermanager"
-local DeskPlayerManager = require "deskplayermanager"
+local DeskManager = require "deskmanager"
 
 local mode = ...
 
@@ -70,40 +70,42 @@ else
         for i= 1, 20 do
             agent[i] = skynet.newservice(SERVICE_NAME, "agent")
         end
-        -- test player
-        local p = Player.new(145)
-        PlayerManager:get_instance():add_player(p)
-        local all_players = PlayerManager:get_instance():get_all_players()
-        print_r(all_players)
-        local data = p:get_player_data()
-        print_r(data)
-        p:set_username("cls1991")
-        p:save()
-        local data2 = p:get_player_data()
-        print_r(data2)
+        -- -- test player
+        -- local p = Player.new(145)
+        -- PlayerManager:get_instance():add_player(p)
+        -- local all_players = PlayerManager:get_instance():get_all_players()
+        -- print_r(all_players)
+        -- local data = p:get_player_data()
+        -- print_r(data)
+        -- p:set_username("cls1991")
+        -- p:save()
+        -- local data2 = p:get_player_data()
+        -- print_r(data2)
+        -- local p2 = PlayerManager:get_instance():get_player(p:get_playerid())
+        -- print_r(p2:get_player_data())
 
-        -- test desk_player
-        local dp_instance = DeskPlayerManager:get_instance()
-        dp_instance:init_desk_player(p:get_playerid())
-        local desk_player = dp_instance:get_desk_player(p:get_playerid())
-        if desk_player ~= nil then
-            print_r(desk_player)
+        -- test desk 
+        local dm = DeskManager:get_instance()
+        local desk_new = dm:create_desk(1)
+        local all_desks = dm:get_all_desks()
+        -- print_r(all_desks)
+        local deskid = 0
+        for _, desk in pairs(all_desks) do
+            deskid = desk:get_deskid()
+            -- local desk_player_ids = desk:get_desk_players()
+            -- print_r(desk:get_desk_data())
+            -- local desk_players = dm:get_desk_all_players(deskid)
+            -- print_r(desk_players)
         end
-        local new_desk_player = dp_instance:create_desk_player(1, p:get_playerid())
-        print_r(new_desk_player)
-        local desk_player2 = dp_instance:get_desk_player(p:get_playerid())
-        local dp_data = desk_player2:get_desk_player_data()
-        print_r(dp_data)
-        desk_player2:set_hand("abc")
-        desk_player2:save()
-        dp_instance:del_desk_player_by_id(p:get_playerid())
-        desk_player2:delete()
-        local desk_player3 = dp_instance:get_desk_player(p:get_playerid())
-        print_r(desk_player3)
+        -- test desk player
+        local desk_player_new = dm:create_desk_player(deskid, 152)
+        print_r(desk_player_new)
+        local desk_players = dm:get_desk_all_players(deskid)
+        print_r(desk_players)
 
         local balance = 1
-        local id = socket.listen("0.0.0.0", 10000)
-        skynet.error("Listen web port 10000")
+        local id = socket.listen("0.0.0.0", 20001)
+        skynet.error("Listen web port 20001")
         socket.start(id , function(id, addr)
             skynet.error(string.format("%s connected, pass it to agent :%08x", addr, agent[balance]))
             skynet.send(agent[balance], "lua", id)

@@ -74,12 +74,12 @@ function MemPkValues:get_items()
 		return self._local_cache
 	end
 	local ret = skynet.call("redispool", "lua", "smembers", self._name)
-	if self._use_local then
-		for key, value in pairs(ret) do
-			if self._value_type == "number" then
-				ret[key] = tonumber(value)
-			end
+	for key, value in pairs(ret) do
+		if self._value_type == "number" then
+			ret[key] = tonumber(value)
 		end
+	end
+	if self._use_local then
 		self._local_cache = ret
 	end
 	self._has_load = true

@@ -1,7 +1,7 @@
 local skynet = require "skynet"
 
 skynet.start(function()
-    skynet.newservice("debug_console", 8000)
+    skynet.newservice("debug_console", 8200)
     local mysqlpool = skynet.uniqueservice "mysqlpool"
     skynet.call(mysqlpool, "lua", "start")
     local redispool = skynet.uniqueservice "redispool"

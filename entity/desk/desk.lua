@@ -1,12 +1,23 @@
 local MemObj = require "memobj"
+local MemPkValues = require "mempkvalues"
+local DeskData = require "deskdata"
+local DeskDataManager = require "deskdatamanager"
+local print_r = require "print_r"
 local Desk = class("Desk", MemObj)
 
 function Desk:ctor(deskid, table_name)
-	if table_name == nil then
-		table_name = "tb_desk"
-	end
+	local table_name = table_name or "tb_desk"
 	local name = string.format("%s:%s", table_name, deskid)
 	Desk.super.ctor(self, name, "deskid")
+	local desk_data = DeskData.new(deskid, self)
+	DeskDataManager:get_instance():add_desk_data(desk_data)
+
+	local key = string.format("%s:%s", name, "deskplayers")
+	self._deskplayers = MemPkValues.new(key, "number", false)
+	if not self._deskplayers:exists_item() then
+        local ids = mem_deskplayer_admin:get_pk_by_fk({deskid=deskid})
+        self._deskplayers:add_item(ids)
+    end
 end
 
 function Desk:get_deskid()
@@ -81,8 +92,24 @@ function Desk:set_kcard(kcard)
 	self:set("kcard", kcard)
 end
 
+function Desk:get_create_time()
+	return self:get("create_time")
+end
+
 function Desk:get_desk_data()
 	return self:get_data()
+end
+
+function Desk:add_desk_player(desk_player_id)
+	self._deskplayers:add_item({desk_player_id})
+end
+
+function Desk:del_desk_player(desk_player_id)
+	self._deskplayers:remove_item(desk_player_id)
+end
+
+function Desk:get_desk_players()
+	return self._deskplayers:get_items()
 end
 
 return Desk

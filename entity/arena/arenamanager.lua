@@ -1,7 +1,6 @@
 local ArenaManager = class("ArenaManager")
 local MemPkValues = require "mempkvalues"
 
-
 function ArenaManager:ctor()
 	self._arena_deskids = {}
 	self._arena_onlines = {}

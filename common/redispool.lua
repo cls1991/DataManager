@@ -7,7 +7,12 @@ local pool = {}
 
 local maxconn
 local function getconn()
-    local db = pool[1]
+    local db
+    if maxconn == 1 then
+        db = pool[1]
+    else
+        db = pool[uid % (maxconn - 1) + 2]
+    end
     return db
 end
 
@@ -21,7 +26,7 @@ function CMD.start()
         }
 
         if db then
-            db:flushdb() --测试期，清理redis数据
+            -- db:flushdb() --测试期，清理redis数据
             table.insert(pool, db)
         else
             skynet.error("redis connect error")

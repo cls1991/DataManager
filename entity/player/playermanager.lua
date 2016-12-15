@@ -41,6 +41,30 @@ function PlayerManager:add_player(player)
 	end
 end
 
+function PlayerDataManager:create_player(username)
+	local player_dict = {
+		username = username,
+        nickname = username,
+        signature = "",
+        sex = 1,
+        elixir = 0,
+        diamond = 0,
+        lottery = 0,
+        charm = 0,
+        money = 300,
+        deskid = 0,
+        is_ai = 0
+	}
+	local mem_obj = mem_player_admin:create(player_dict)
+	if mem_obj == nil then
+		return nil
+	end
+	local mem_key = mem_obj:get_primary_keys()
+	local player = Player.new(mem_key)
+	self:add_player(player)
+	return player
+end
+
 function PlayerManager:del_player_by_id(playerid)
 	PlayerDataManager:get_instance():del_player_data_by_id(playerid)
 end

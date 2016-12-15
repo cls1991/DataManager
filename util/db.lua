@@ -43,12 +43,17 @@ local function load_schema_data(tbname)
             or field_type == "tinytext"
             or field_type == "text"
             or field_type == "mediumtext"
-            or field_type == "longtext" then
+            or field_type == "longtext" 
+            or field_type == "date"
+            or field_type == "datetime" 
+            or field_type == "timestamp"
+            then
             schema[tbname]["fields"][field] = "string"
         else
             schema[tbname]["fields"][field] = "number"
         end
     end
+    return schema[tbname]
 end
 
 function get_schema_data(tbname)
